@@ -11,32 +11,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Domination across consecutive Pareto fronts</title>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<style>
-body{font-family:Arial,Helvetica,sans-serif;max-width:950px;margin:40px auto;}
-h2{margin-top:0;}
-button{margin:12px 0;padding:6px 14px;font-size:14px;cursor:pointer;}
-</style>
+  <meta charset="UTF-8">
+  <title>Domination Across Consecutive Pareto Fronts</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 950px;
+      margin: 40px auto;
+      line-height: 1.6;
+      color: #333;
+    }
+    header, main, footer {
+      margin-bottom: 20px;
+    }
+    h1, h2 {
+      margin-top: 0;
+      color: #2a3f5f;
+    }
+    p {
+      margin: 1em 0;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    li {
+      margin: 0.5em 0;
+    }
+    button {
+      display: block;
+      margin: 1em 0;
+      padding: 8px 16px;
+      font-size: 1em;
+      cursor: pointer;
+      background-color: #2a3f5f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+    .formula {
+      font-size: 1.1em;
+      text-align: center;
+      margin: 1.5em 0;
+    }
+  </style>
 </head>
 <body>
 
-<h2>Domination across consecutive Pareto fronts</h2>
+  <header>
+    <h1>Domination Across Consecutive Pareto Fronts</h1>
+  </header>
 
-<p> The following figure illustrates three non‑dominated fronts for a bi‑objective minimization task <p>(f<sub>1</sub>, f<sub>2</sub>)</p>.
-
-<ul>
-<li><strong>F<sub>1</sub></strong> — Pareto‑optimal points (yellow circles).</li>
-<li><strong>F<sub>2</sub></strong> — each point is dominated by at least one point in F<sub>1</sub> (orange triangles).</li>
-<li><strong>F<sub>3</sub></strong> — each point dominated by at-least one point in F<sub>1</sub> or F<sub>2</sub> (red squares).</li>
-</ul>
-
-<p>The arrows points from a <em>dominator&nbsp;→&nbsp; a dominated</em> solution, making visible the rule</p>
-
-<p style="text-align:center;font-size:1.1em;margin:0.7em 0;">
-∀ x ∈ F<sub>i</sub> (i&gt;1) ∃ y ∈ F<sub>j</sub>, j&lt;i : y ≺ x
-</p>
+  <main>
+    <section>
+      <p>This interactive demo visualizes three non-dominated Pareto fronts for a bi-objective minimization problem <em>(f<sub>1</sub>, f<sub>2</sub>)</em>.</p>
+      <ul>
+        <li><strong>Front F<sub>1</sub>:</strong> Pareto-optimal points (yellow circles).</li>
+        <li><strong>Front F<sub>2</sub>:</strong> Points dominated by F<sub>1</sub> (orange triangles).</li>
+        <li><strong>Front F<sub>3</sub>:</strong> Points dominated by F<sub>1</sub> or F<sub>2</sub> (red squares).</li>
+      </ul>
+      <p>The arrows show the dominance relationship, pointing from a dominator to a dominated solution.</p>
+      <div class="formula">
+        ∀ x ∈ F<sub>i</sub> (i &gt; 1), ∃ y ∈ F<sub>j</sub> (j &lt; i) : y ≺ x
+      </div>
+    </section>
 
 <button id="toggleBtn" onclick="toggleArrows()">Hide arrows</button>
 
