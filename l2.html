@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>APS: The Frontier Quest</title>
+  <style>
+    body,html { margin:0; padding:0; height:100%; overflow:hidden; }
+    body { font-family:sans-serif; display:flex; background:#eef2f5; }
+    #narrative {
+      width:30%; background:white; border-right:1px solid #ccc;
+      padding:20px; box-sizing:border-box; display:flex; flex-direction:column;
+    }
+    #narrative h1 { margin-top:0; color:#2c3e50; }
+    #narrative p { flex:1; color:#34495e; line-height:1.4em; }
+    #narrative button {
+      align-self:flex-end; padding:10px 16px; background:#2980b9;
+      color:white; border:none; border-radius:4px; cursor:pointer;
+    }
+    #sim {
+      flex:1; display:flex; align-items:center; justify-content:space-around;
+      padding:20px;
+    }
+    .box {
+      width:100px; min-height:140px; padding:10px; border:2px solid #7f8c8d;
+      border-radius:8px; background:rgba(255,255,255,0.9); box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      display:flex; flex-wrap:wrap; gap:6px; justify-content:center;
+    }
+    .box h3 { margin:0 0 8px; font-size:1em; color:#2c3e50; text-align:center; }
+    .item {
+      width:28px; height:28px; border-radius:50%; line-height:28px;
+      text-align:center; background:#3498db; color:white; cursor:pointer;
+      transition:transform .3s;
+    }
+    .item:hover { transform:scale(1.2); }
+    .host { background:#c0392b!important; cursor:default; }
+    .R    { background:#e67e22!important; cursor:default; }
+    .RK   { background:#27ae60!important; cursor:default; }
+    .RKp  { background:#8e44ad!important; cursor:default; }
+    .NDS  { background:#2ecc71!important; cursor:default; }
+    #hostLabel { font-weight:bold; color:#c0392b; }
+    #log { height:80px; overflow-y:auto; font-size:.9em; color:#7f8c8d; margin-top:10px; }
+  </style>
+</head>
+<body>
+
+  <!-- background music -->
+  <audio src="background.mp3" loop autoplay id="bgm"></audio>
+
+  <div id="narrative">
+    <h1>The Frontier Quest</h1>
+    <p id="narrativeText">
+      Welcome, brave explorer!  Your mission is to peel off the outermost “frontier”
+      of our solution world, one champion at a time.  Click “Begin” to start your quest.
+    </p>
+    <button id="nextBtn">Begin</button>
+  </div>
+
+  <div id="sim">
+    <div class="box" id="Q"><h3>Q</h3></div>
+    <div class="box" id="R"><h3>R</h3></div>
+    <div class="box" id="RK"><h3>RK</h3></div>
+    <div class="box" id="RKp"><h3>RK′</h3></div>
+    <div class="box" id="NDS"><h3>NDS</h3></div>
+  </div>
+
+  <div id="log"></div>
+
+<script>
+/*——————————  Story frames ——————————*/
+const story = [
+  `Our world is represented by six heroes: A–F, each with two skills (f1,f2).`,
+  `Step 1: Choose one hero at random to be your champion (the red "host").`,
+  `Step 2: Challenge each remaining hero in Q to a duel:<br>
+   &nbsp;&nbsp;&bull; If your champion defeats them (dominates), they vanish.<br>
+   &nbsp;&nbsp;&bull; If they defeat your champion, they become the new champion (red), and your survivors go to RK.<br>
+   &nbsp;&nbsp;&bull; If neither wins, they retreat to R for later.`,
+  `Step 3: When no challengers remain, compute RK′: those RK heroes your champion did not beat.`,
+  `Step 4: Your final champion joins the Frontier (NDS, green).`,
+  `Step 5: Rebuild Q = RK′ ∪ R and repeat until all heroes are front-line!`,
+  `You have mastered the Arena-Principle Sorting and claimed the entire frontier!`
+];
+let step=0;
+
+/*——————————  Simulation state ——————————*/
+const heroes = ['A','B','C','D','E','F'];
+let Q, R, RK, RKp, host, NDS;
+
+/* fake dominance: letter earlier wins */
+const dominates = (a,b)=> a<b;
+
+function init(){
+  Q=[...heroes]; R=[]; RK=[]; RKp=[]; NDS=[]; host=null;
+  document.getElementById('log').innerHTML='';
+  renderAll();
+}
+
+/*——————————  Rendering ——————————*/
+function createItem(h,cls){
+  const d=document.createElement('div');
+  d.textContent=h; d.className='item '+(cls||'');
+  return d;
+}
+function renderBox(id, arr,cls){
+  const box=document.getElementById(id);
+  box.querySelectorAll('.item').forEach(n=>n.remove());
+  arr.forEach(h=> box.appendChild(createItem(h,cls)) );
+}
+function renderAll(){
+  renderBox('Q',Q);
+  renderBox('R',R,'R');
+  renderBox('RK',RK,'RK');
+  renderBox('RKp',RKp,'RKp');
+  renderBox('NDS',NDS,'NDS');
+  document.getElementById('log').scrollTop=1e9;
+}
+
+/*——————————  Logging ——————————*/
+function log(msg){
+  const div=document.getElementById('log'), p=document.createElement('div');
+  p.innerHTML=msg; div.appendChild(p); div.scrollTop=div.scrollHeight;
+}
+
+/*——————————  Narrative button ——————————*/
+document.getElementById('nextBtn').onclick = ()=>{
+  const txt = document.getElementById('narrativeText');
+  if(step===0){
+    init();
+    txt.innerHTML = story[++step];
+    document.getElementById('nextBtn').textContent='Pick Champion';
+  }
+  else if(step===1){
+    host=Q.splice(Math.floor(Math.random()*Q.length),1)[0];
+    log(`<b>Champion:</b> ${host}`);
+    document.getElementById('nextBtn').textContent='Next Duel';
+    txt.innerHTML = story[++step];
+    renderAll();
+  }
+  else if(step>=2 && step< 2+heroes.length){
+    if(Q.length){
+      const y=Q.shift();
+      if(dominates(host,y)){
+        log(`${host} ≺ ${y}: ${y} vanishes`);
+      } else if(dominates(y,host)){
+        log(`${y} ≺ ${host}: ${y} becomes champion; survivors→RK`);
+        RK=RK.concat(R); R=[];
+        host=y;
+      } else {
+        log(`No victor: ${y} retreats to R`);
+        R.push(y);
+      }
+      renderAll();
+      txt.innerHTML = story[2];
+    } else {
+      step = 2+heroes.length;
+      txt.innerHTML = story[step];
+      document.getElementById('nextBtn').textContent='Compute RK′';
+    }
+  }
+  else if(step===2+heroes.length){
+    RKp = RK.filter(h=>!dominates(host,h));
+    log(`RK′ = {${RKp}}`);
+    renderAll();
+    step++; document.getElementById('nextBtn').textContent='Crown Champion';
+  }
+  else if(step===3+heroes.length){
+    NDS.push(host);
+    log(`<b>${host}</b> joins the frontier`);
+    renderAll();
+    step++; document.getElementById('nextBtn').textContent='Rebuild Q';
+    document.getElementById('narrativeText').innerHTML = story[4];
+  }
+  else if(step===4+heroes.length){
+    Q = RKp.concat(R); R=[]; RK=[]; RKp=[];
+    log(`New Q = {${Q}}`);
+    renderAll();
+    step = 1; // go back to champion pick
+    document.getElementById('narrativeText').innerHTML = story[1];
+    document.getElementById('nextBtn').textContent='Pick Champion';
+  }
+};
+
+/*——————————  Initial ——————————*/
+document.getElementById('bgm').volume=0.2;
+</script>
+
+</body>
+</html>
