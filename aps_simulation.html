@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>APS Interactive Demo</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+    .containers { display: flex; gap: 20px; margin-top: 20px; }
+    .box {
+      border: 2px solid #444; padding: 10px; width: 120px; min-height: 120px;
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .box h3 { margin: 0 0 10px 0; font-size: 1em; text-align: center; }
+    .item {
+      width: 24px; height: 24px; line-height: 24px; text-align: center;
+      border-radius: 4px; background: steelblue; color: white; cursor: pointer;
+    }
+    .host { background: crimson !important; }
+    .R    { background: orange  !important; }
+    .RK   { background: green   !important; }
+    .RKp  { background: purple  !important; }
+    #hostBox { margin-top: 10px; }
+    button { margin: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>APS Sorting Demo</h1>
+  <p>Click “Pick Host” to choose a random host (red).  Then “Next” to compare one item from Q.</p>
+
+  <div id="hostBox">Host: <span id="hostLabel">–</span></div>
+  <button id="pickHost">Pick Host</button>
+  <button id="nextStep" disabled>Next Comparison</button>
+  <button id="reset">Reset</button>
+
+  <div class="containers">
+    <div class="box" id="Q"><h3>Q (working)</h3></div>
+    <div class="box" id="R"><h3>R (incomparables)</h3></div>
+    <div class="box" id="RK"><h3>RK (arena-carry)</h3></div>
+    <div class="box" id="RKp"><h3>RK′</h3></div>
+  </div>
+
+  <script>
+  // sample points with 2D coords
+  const points = {
+    A: [1.0,3.0],
+    B: [2.5,2.0],
+    C: [3.0,1.5],
+    D: [2.0,3.5],
+    E: [3.5,2.5],
+    F: [1.5,1.5]
+  };
+
+  let Q = [], R = [], RK = [], host = null;
+  const dominates = (a,b) => 
+    a[0]<=b[0] && a[1]<=b[1] && (a[0]<b[0] || a[1]<b[1]);
+
+  function renderBox(id, arr, cssClass) {
+    const box = document.getElementById(id);
+    box.querySelectorAll('.item').forEach(n=>n.remove());
+    arr.forEach(label=>{
+      const d = document.createElement('div');
+      d.textContent = label;
+      d.className = 'item '+cssClass;
+      box.appendChild(d);
+    });
+  }
+
+  function resetAll(){
+    Q = Object.keys(points);
+    R = []; RK = []; host = null;
+    document.getElementById('hostLabel').textContent = '–';
+    document.getElementById('nextStep').disabled = true;
+    renderBox('Q', Q, '');
+    renderBox('R', R, 'R');
+    renderBox('RK', RK, 'RK');
+    renderBox('RKp', [], 'RKp');
+  }
+
+  document.getElementById('reset').onclick = resetAll;
+
+  document.getElementById('pickHost').onclick = ()=>{
+    if(Q.length===0) return;
+    const idx = Math.floor(Math.random()*Q.length);
+    host = Q.splice(idx,1)[0];
+    document.getElementById('hostLabel').textContent = host;
+    document.getElementById('nextStep').disabled = false;
+    renderBox('Q', Q, '');
+    renderBox('R', R, 'R');
+    renderBox('RK', RK, 'RK');
+  };
+
+  document.getElementById('nextStep').onclick = ()=>{
+    if(!host || Q.length===0) return;
+    // pick next from Q
+    const y = Q.shift();
+    const x = host;
+    const coordsX = points[x], coordsY = points[y];
+    if(dominates(coordsX,coordsY)){
+      // host dominates y => drop y
+    }
+    else if(dominates(coordsY,coordsX)){
+      // y dominates host => switch host, flush R into RK
+      RK = RK.concat(R);
+      R = [];
+      host = y;
+      document.getElementById('hostLabel').textContent = host;
+    }
+    else {
+      // incomparable => move y to R
+      R.push(y);
+    }
+    // re-render
+    renderBox('Q', Q, '');
+    renderBox('R', R, 'R');
+    renderBox('RK', RK, 'RK');
+    // if Q empty, compute RK'
+    if(Q.length===0){
+      const RKp = RK.filter(z=>!dominates(points[host],points[z]));
+      renderBox('RKp', RKp, 'RKp');
+      document.getElementById('nextStep').disabled = true;
+    }
+  };
+
+  // initial population
+  resetAll();
+  </script>
+
+</body>
+</html>
